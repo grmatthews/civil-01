@@ -1,8 +1,165 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isSystemRole() {
+        return (request.auth.token.system_role && request.auth.token.system_role == true)
+    }
+
+    function isClientRequest() {
+        return request.auth.token.account_type == 'client'
+    }
+
+    function isAdminRole() {
+          return request.auth.token.roles.hasAll(['admin'])
+    }
+
+    function isNonEmptyString(str) {
+      return str is string && str != '' && str != null
+    }
+
+    // Generic check for 'account_id' attribute in existing doc matches user token account_id
+    // This applies to reads and deletes, which are both performed against an EXISTING document,
+    // !Cannot be used for the 'accounts' collection
+    function isExistingFromMyAccount() {
+        return (resource.data.account_id == request.auth.token.account_id)
+    }
+
+
+    // Generic check for 'account_id' attribute in existing doc matches user token account_id
+    // !Cannot be used for the 'accounts' collection
+    function isWriteToMyAccount() {
+        return (request.resource.data.account_id == request.auth.token.account_id)
+    }
+
     match /{document=**} {
       allow read, write: if false;
+    }
+
+  match /lookups/{lookupID} {
+
+      function isValidLookup(lookup) {
+
+        let mandatory = ['account_id', 'name', 'created', 'modified', 'lookup_values'];
+        let optional = [];
+        let all = mandatory.concat(optional);
+
+        return lookup.created is timestamp &&
+          lookup.modified is timestamp &&
+          lookup.keys().hasAll(mandatory) && 
+          lookup.keys().hasOnly(all);
+      }
+
+
+      allow read: if (isExistingFromMyAccount() || isSystemRole())
+
+      allow delete: if (isExistingFromMyAccount() && isAdminRole()) || isSystemRole()
+
+      allow create, update: if (isWriteToMyAccount() || isSystemRole()) && isValidLookup(request.resource.data)
+      
+    }
+
+    match /invites/{inviteID} {
+
+      function isValidInvite(invite) {
+
+        let mandatory = ['account_id', 'email', 'type', 'created'];
+        let optional = [];
+        let all = mandatory.concat(optional);
+
+        let inviteTypes = ['staff', 'supplier'];
+
+        return invite.created is timestamp &&
+          invite.type in inviteTypes &&
+          invite.keys().hasAll(mandatory) && 
+          invite.keys().hasOnly(all);
+      }    
+
+      function isInviteToMe() {
+        return request.auth.token.email == resource.data.email
+      }
+
+      allow read: if (isExistingFromMyAccount() || isSystemRole())
+
+      allow delete: if (isExistingFromMyAccount() && isAdminRole()) || isSystemRole() || isInviteToMe()
+
+      allow create, update: if (isWriteToMyAccount() || isSystemRole()) && isValidInvite(request.resource.data)
+    }
+
+    match /users/{userID} {
+
+      function isValidUser(user) {
+
+        let mandatory = ['account_id', 'first_name', 'last_name', 'email', 'created', 'modified', 'phone', 'roles'];
+        let optional = [];
+        let all = mandatory.concat(optional);
+
+        return user.created is timestamp &&
+          user.modified is timestamp &&
+          isNonEmptyString(user.first_name) &&
+          isNonEmptyString(user.last_name) && 
+          user.keys().hasAll(mandatory) && 
+          user.keys().hasOnly(all);
+      }
+
+
+      function isRolesChanged() {
+        return !(request.resource.data.roles.hasAll(resource.data.roles) && 
+          resource.data.roles.hasAll(request.resource.data.roles))
+      }
+
+      function isUpdatingOtherUser() {
+          return request.auth.token.uid != request.resource.id
+      }
+
+      function isMyUserRecord() {
+        return request.auth.token.uid == resource.id
+      }
+
+      function nonAdminRules() {
+        return !isAdminRole() &&
+          !isUpdatingOtherUser() &&
+          !isRolesChanged()
+      }
+
+      allow read: if isExistingFromMyAccount() || isSystemRole() || isMyUserRecord()
+
+      allow delete: if (isExistingFromMyAccount() && isAdminRole()) || isSystemRole()
+
+      allow create, update: if ((isWriteToMyAccount() && (nonAdminRules() || isAdminRole())) || isSystemRole()) && isValidUser(request.resource.data)
+    }
+
+    match /accounts/{accountID} {
+
+      // Reading accounts is different to other collections, since the 'id' attribute is the account id
+      // whereas for users, etc, they have a separate 'account_id' attribute.
+      function isAccountReadFromMyAccount() {
+        return (resource.id == request.auth.token.account_id);
+      }
+
+      function isAccountWriteToMyAccount() {
+        return (request.resource.id == request.auth.token.account_id);
+      }
+
+      function isValidAccountType(account) {
+        return account.type == 'contractor' || account.type == 'client'
+      }
+
+      function isValidAccount(account) {
+
+        let mandatory = ['name', 'email', 'type', 'created', 'modified', 'modules'];
+        let optional = ['phone', 'stripe_cust_id'];
+        let all = mandatory.concat(optional);
+
+        return 
+          isNonEmptyString(account.name) &&
+          isValidAccountType(account) &&
+          account.keys().hasAll(mandatory) && 
+          account.keys().hasOnly(all);
+      }
+
+      allow read, delete: if (isAccountReadFromMyAccount() || isSystemRole())
+      allow create, update: if (isAccountWriteToMyAccount() || isSystemRole()) && isValidAccount(request.resource.data)
     }
   }
 }

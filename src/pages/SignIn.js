@@ -13,7 +13,7 @@ import {
     Box,
     Button,
 } from "@material-ui/core"
-import { useForm, Form } from "../components/useForm"
+import { Form } from "../components/useForm"
 import { SnackbarProvider } from "notistack"
 import { useHistory } from "react-router-dom"
 import firebase from "firebase"
@@ -66,10 +66,6 @@ const emptyUserDetails = {
     account_id: "",
 }
 
-const initialValues = {
-    email: "",
-    otp: "",
-}
 
 var actionCodeSettings = {
     // URL you want to redirect back to. The domain (www.example.com) for this
@@ -168,28 +164,7 @@ function SignIn() {
         }
     }, [])
 
-    // const reregisterSW = async () => {
-    //     navigator.serviceWorker
-    //         .getRegistrations()
-    //         .then((registrations) => {
-    //             console.log("registrations", registrations)
-
-    //             registrations.forEach((reg) => {
-    //                 reg.unregister().then(async (result) => {
-    //                     console.log("SW unregister result", result)
-    //                     await addLog(`SW unregister result ${result}`)
-    //                 })
-    //             })
-    //         })
-    //         .then(async () => {
-    //             await addLog("Registering SW")
-    //             navigator.serviceWorker.register("./serviceWorker.js").then(async (result) => {
-    //                 console.log("SW register result", result)
-    //                 await addLog(`SW register result ${result}`)
-    //             })
-    //         })
-    // }
-
+   
     const forceReload = () => {
         window.location.reload(true)
     }
@@ -249,41 +224,6 @@ function SignIn() {
     const addLog = async (log) => {
         setLogs([...logs, log])
     }
-
-    // const reload = async () => {
-    //     const logMsgs = []
-
-    //     console.log("clicked reload")
-    //     logMsgs.push("clicked reload")
-
-    //     if ("serviceWorker" in navigator) {
-    //         let foundRegistrations = false
-
-    //         navigator.serviceWorker.getRegistrations().then(async (registrations) => {
-    //             console.log(`found ${registrations.length} registrations`)
-    //             foundRegistrations = true
-    //             logMsgs.push(`found ${registrations.length} registrations`)
-    //             for (let registration of registrations) {
-    //                 console.log("registration update", registration)
-    //                 logMsgs.push("registration update")
-    //                 registration
-    //                     .update()
-    //                     .then((result) => console.log("registration update result", result))
-    //             }
-    //         })
-
-    //         if (!foundRegistrations) {
-    //             logMsgs.push("Found 0 registrations")
-    //         }
-    //     } else {
-    //         console.log("cannot find serviceWorker")
-    //         logMsgs.push("cannot find serviceworker")
-    //     }
-
-    //     console.log("Adding log msgs", logMsgs)
-
-    //     setLogs([...logs, ...logMsgs])
-    // }
 
     const isSignInWithEmailLink = firebase.auth().isSignInWithEmailLink(window.location.href)
 
@@ -373,7 +313,6 @@ function SignIn() {
                                 centre_ids: dbUser.centres ? dbUser.centres : [],
                                 loaded_centres: false,
                                 loaded_suppliers: false,
-                                loaded_work_orders: false,
                             }
                             console.log("set userDetails", newUserDetails)
                             authSetUserDetails(newUserDetails)

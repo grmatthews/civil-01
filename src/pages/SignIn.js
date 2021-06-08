@@ -301,7 +301,8 @@ function SignIn() {
                 .auth()
                 .currentUser.getIdTokenResult()
                 .then((token) => {
-                    console.log("token", token)
+                    console.log("token", token, 'authSetUserDetails', authSetUserDetails)
+
 
                     dataServices
                         .getUserByUid(firebase.auth().currentUser.uid)

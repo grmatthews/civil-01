@@ -9,6 +9,7 @@ import Page2 from "./pages/Page2"
 import Dashboard from "./pages/Dashboard"
 import ProfilePage from "./pages/ProfilePage"
 import ProtectedRoute from "./ProtectedRoute"
+import Billing from "./pages/Billing"
 
 const AppMenu = (props) => {
     console.log("AppMenu", props)
@@ -26,6 +27,8 @@ const AppMenu = (props) => {
                 <Route path='/page2' component={Page2} />
 
                 <ProtectedRoute path='/dashboard' component={Dashboard} allowAccess={true} />
+
+                <ProtectedRoute path='/billing/:id' component={Billing} allowAccess={true} />
 
                 <ProtectedRoute path='/profile' component={ProfilePage} allowAccess={true} />
             </Switch>

@@ -534,13 +534,18 @@ exports.getStripePlan = functions.https.onCall(async (data, context) => {
 // See if a Stripe customer exists with a given email
 exports.getStripeCustomerByEmail = functions.https.onCall(async (data, context) => {
     if (!isSystemRole(context)) {
-        return createStatus("Insuffient permissions", "error")
+
+        console.log('Insufficient permissions')
+        return createStatus("Insufficient permissions", "error")
     }
 
     // See if Stripe customer with this given email already exists
 
+    functions.logger.info("Find any Stripe customers with email", data.email)
+
     const customers = await stripe.customers.list({ email: data.email })
-    console.log("existing customers?", customers)
+
+    functions.logger.info("existing customers?", customers)
 
     return { customers: customers.data }
 })
@@ -613,7 +618,7 @@ exports.linkToStripeCustomerByEmail = functions.https.onCall(async (data, contex
 
 exports.createStripeSubscription = functions.https.onCall(async (data, context) => {
     if (!isSystemRole(context)) {
-        return createStatus("Insuffient permissions", "error")
+        return createStatus("Insufficient permissions", "error")
     }
 
     const accountId = data.account_id
@@ -685,7 +690,7 @@ exports.createStripeSubscription = functions.https.onCall(async (data, context) 
 
 exports.repairStripeConfig = functions.https.onCall(async (data, context) => {
     if (!isSystemRole(context)) {
-        return createStatus("Insuffient permissions", "error")
+        return createStatus("Insufficient permissions", "error")
     }
 
     const accountId = data.account_id

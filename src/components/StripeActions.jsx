@@ -88,8 +88,15 @@ const StripeActions = (props) => {
         let linkToStripeAccount = false
 
         if (!hasStripeCustId) {
+
+            console.log('Find Stripe customers with email', accountInfo.email)
+
+            // Try finding Stripe customers by email match, since we don't have a Stripe cust id
             const customers = await findStripeCustomerByEmail(accountInfo.email)
-            if (customers.length === 1) {
+
+            console.log("search results", customers)
+
+            if (customers && customers.length === 1) {
                 newActions.push({
                     title: "Link Stripe Account",
                     description: `Link to existing Stripe account with same email`,

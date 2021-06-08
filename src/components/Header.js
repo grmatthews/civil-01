@@ -231,18 +231,20 @@ function Header(props) {
         return isSystemRole
     }
 
-    const configItemData = [
-        {
-            label: "Job Types",
-            uri: "/jobtypes",
-            canAccess: () => true,
-        },
-        {
-            label: "Supplier Document Types",
-            uri: "/supplierdoctypes",
-            canAccess: () => true,
-        },
-    ]
+    // const configItemData = [
+    //     {
+    //         label: "Job Types",
+    //         uri: "/jobtypes",
+    //         canAccess: () => true,
+    //     },
+    //     {
+    //         label: "Supplier Document Types",
+    //         uri: "/supplierdoctypes",
+    //         canAccess: () => true,
+    //     },
+    // ]
+
+    const configItemData = []
 
     const profileMenuId = "profile-menu"
 

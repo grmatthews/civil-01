@@ -17,16 +17,15 @@ import db from "../Firestore"
 import firebase from "firebase"
 
 const useStyles = makeStyles((theme) => ({
-
     headerFields: {
         margin: theme.spacing(1),
     },
-    pageContent : {
+    pageContent: {
         marginTop: theme.spacing(1),
         marginLeft: theme.spacing(1),
         marginRight: theme.spacing(2),
         padding: theme.spacing(1),
-        maxWidth: '320px',
+        maxWidth: "320px",
     },
 }))
 
@@ -45,6 +44,9 @@ const BillingForm = (props) => {
 
     const { setTitle } = props
 
+    // This gets populated securely from the Google JWT, and also protected access server-side
+    const [isSystem, setSystem] = useState(undefined)
+
     const [values, setValues] = useState({
         name: "",
         email: "",
@@ -54,6 +56,20 @@ const BillingForm = (props) => {
     })
 
     const { accountId } = props
+
+    useEffect(() => {
+        const unsub = firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                user.getIdTokenResult(true).then((token) => {
+                    if (isSystem === undefined) {
+                        setSystem(token.claims.system_role)
+                    }
+                })
+            }
+        })
+
+        return unsub
+    }, [])
 
     const loadAccountData = async (accountId) => {
         let newValues = {
@@ -132,20 +148,20 @@ const BillingForm = (props) => {
     }
 
     const handleUpdateCard = (updatedCard) => {
-
-        const newCards = stripeAccountInfo.cards.map(card => card.id === updatedCard.id ? updatedCard : card)
+        const newCards = stripeAccountInfo.cards.map((card) =>
+            card.id === updatedCard.id ? updatedCard : card
+        )
 
         const newStripeAccountInfo = {
             ...stripeAccountInfo,
-            cards: newCards
+            cards: newCards,
         }
         setStripeAccountInfo(newStripeAccountInfo)
     }
 
     useEffect(() => {
         if (accountId && maxModified) {
-
-            console.log('loading account data', { accountId, maxModified})
+            console.log("loading account data", { accountId, maxModified })
             loadAccountData(accountId)
         }
     }, [accountId, setTitle, maxModified])
@@ -246,12 +262,14 @@ const BillingForm = (props) => {
                 </Form>
             </Paper>
 
-            <StripeActions
-                accountId={accountId}
-                stripeAccountInfo={stripeAccountInfo}
-                accountInfo={values}
-                setShowProgress={setShowProgress}
-            />
+            {isSystem && (
+                <StripeActions
+                    accountId={accountId}
+                    stripeAccountInfo={stripeAccountInfo}
+                    accountInfo={values}
+                    setShowProgress={setShowProgress}
+                />
+            )}
 
             {retrievedBilling && (
                 <>
@@ -266,7 +284,7 @@ const BillingForm = (props) => {
                     ))}
 
                     {stripeAccountInfo.cards.map((card) => (
-                        <StripeCard card={card} key={card.id} updateCard={handleUpdateCard}/>
+                        <StripeCard card={card} key={card.id} updateCard={handleUpdateCard} />
                     ))}
                 </>
             )}
